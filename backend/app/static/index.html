@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Editor</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 PDF Editor</h1>
+            <p>Fill in the form to edit your PDF document</p>
+        </div>
+
+        <form id="pdfForm">
+            <div class="form-group">
+                <label for="newValue">New Value:</label>
+                <input type="text" id="newValue" name="new_value" required>
+            </div>
+
+            <div class="form-group">
+                <label for="newName">Name:</label>
+                <input type="text" id="newName" name="new_name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="newCpf">CPF:</label>
+                <input type="text" id="newCpf" name="new_cpf" required placeholder="000.000.000-00">
+            </div>
+
+            <div class="form-group">
+                <label for="newBank">Bank:</label>
+                <input type="text" id="newBank" name="new_bank" required>
+            </div>
+
+            <div class="form-group">
+                <label for="newAgency">Agency:</label>
+                <input type="text" id="newAgency" name="new_agency">
+            </div>
+
+            <div class="form-group">
+                <label for="newAccount">Account:</label>
+                <input type="text" id="newAccount" name="new_account">
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                Generate PDF
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p>Processing your PDF...</p>
+        </div>
+
+        <div class="message" id="message"></div>
+    </div>
+
+    <audio id="clickSound" preload="auto">
+        <source src="static/sound-effect.mp3" type="audio/mpeg">
+        <!-- Fallback for browsers that don't support MP3 -->
+        <!-- <source src="static/sound-effect.ogg" type="audio/ogg"> -->
+    </audio>
+
+    <script>
+        // Get the base URL dynamically
+        const baseURL = window.location.origin;
+        
+        document.getElementById('pdfForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Play sound effect
+            const clickSound = document.getElementById('clickSound');
+            try {
+                clickSound.currentTime = 0;
+                await clickSound.play();
+            } catch (error) {
+                console.log('Could not play sound:', error);
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const message = document.getElementById('message');
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            if (data.new_agency === '' || data.new_agency === undefined) {
+              data.new_agency = null;
+            }
+            if (data.new_account === '' || data.new_account === undefined) {
+                data.new_account = null;
+            }
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            loading.style.display = 'block';
+            message.style.display = 'none';
+            
+            try {
+                const response = await fetch(`${baseURL}/pdf`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    // Create blob from response
+                    const blob = await response.blob();
+                    
+                    // Create download link
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${crypto.randomUUID()}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    // Show success message
+                    showMessage('PDF generated successfully! Download started automatically.', 'success');
+                    
+                    // Reset form
+                    this.reset();
+                } else {
+                    const errorText = await response.text();
+                    let errorMessage = 'Failed to generate PDF';
+                    
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.detail || errorMessage;
+                    } catch (e) {
+                        errorMessage = errorText || errorMessage;
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error: ' + error.message, 'error');
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Generate PDF';
+                loading.style.display = 'none';
+            }
+        });
+        
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 5000);
+        }
+        
+        document.getElementById('newValue').addEventListener('keyup', function(e) {
+            let value = e.target.value;
+            
+            // Remove everything except digits
+            value = value.replace(/\D/g, '');
+            
+            // Convert to cents (divide by 100)
+            value = (parseInt(value) || 0) / 100;
+            
+            // Format as Brazilian currency
+            let formatted = value.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            e.target.value = formatted;
+        });
+
+        // CPF formatting
+        document.getElementById('newCpf').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            e.target.value = value;
+        });
+        
+        // Prevent form submission on Enter key in input fields (except submit button)
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const form = e.target.form;
+                    const index = Array.prototype.indexOf.call(form, e.target);
+                    const nextElement = form.elements[index + 1];
+                    if (nextElement && nextElement.type !== 'submit') {
+                        nextElement.focus();
+                    } else {
+                        form.querySelector('button[type="submit"]').click();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
