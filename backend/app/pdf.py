@@ -98,7 +98,7 @@ def edit_pdf(
     # Edit CPF
     CPF_FONT_FILE = "fonts/Inter_24pt-Regular.ttf"
     CPF_OLD_TEXT = "647.433"
-    CPF_FONT_SIZE = 10
+    CPF_FONT_SIZE = 9.5
     CPF_FONT_NAME = "F2"
     CPF_COLOR = (0, 0, 0)
 
@@ -113,7 +113,7 @@ def edit_pdf(
     page.draw_rect(text_instance, color=(1, 1, 1), fill=(1, 1, 1))
 
     page.insert_text(
-        (66, 371),
+        (66, 371.5),
         new_cpf,
         fontname=CPF_FONT_NAME,
         fontfile=CPF_FONT_FILE,
