@@ -29,7 +29,7 @@ def edit_pdf(
 
     page.insert_text(
         (span["bbox"][0], 230),
-        "Fernando Sousa Santos",
+        "José Fernando Sousa Santos",
         fontname=NAME_FONT_NAME,
         fontfile=NAME_FONT_FILE,
         fontsize=NAME_FONT_SIZE,
@@ -54,7 +54,6 @@ def edit_pdf(
 
     page.draw_rect(text_instance, color=(1, 1, 1), fill=(1, 1, 1))
 
-    print(span["bbox"])
     page.insert_text(
         (span["bbox"][0], 298),
         "51209067220",
@@ -70,4 +69,4 @@ def edit_pdf(
 
 
 if __name__ == "__main__":
-    edit_pdf("templates/mercado_pago.pdf", "templates/mercado_pago_new.pdf")
+    edit_pdf("templates/mercado_pago_original.pdf", "templates/mercado_pago.pdf")
