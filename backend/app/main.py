@@ -4,8 +4,8 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.models import EditPDFRequest
-from app.pdf import edit_pdf
+from models import EditPDFRequest
+from pdf import edit_pdf
 
 app = FastAPI()
 

@@ -1,6 +1,6 @@
 import fitz  # PyMuPDF
 from fitz import Document, Page
-from app.utils import get_date_string
+from utils import get_date_string
 
 
 def edit_pdf(
